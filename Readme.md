@@ -1,120 +1,177 @@
-MOngodb attles-> online cloud cluster used
-String,Integer,Double,Boolean,Null,Array,Objects
-skill:[c++,c,java]
-book:{name:'deep',
-    author:'xyz',
-    paper:775
-}
-_id- 12 bytes 4bytes-timestamp -date and time of creating record 
-2bytes -> couter 
-every id be unique id
+# MongoDB Practice
 
-undefined is as good as null 
-date also type
-binary data - non text based value (0,1)
-find command is used to retrieve data
-db.employee.find()
-db.employee.find.pretty()
+This README provides an overview of basic MongoDB concepts, data types, CRUD operations, indexing, aggregation, and shell commands.
 
+## Data Types
 
-var cur=db.employee.find().pretty()
-while(cur.hasNext())
+* **String**
+* **Integer**
+* **Double**
+* **Boolean**
+* **Null**
+* **Array**
+* **Object**
+* **Date**
+* **Binary Data** (non-text values)
+
+Examples:
+```json
+// Simple document
 {
-    print(tojson(cur.next()))
+  "skill": ["C++", "C", "Java"],
+  "book": {
+    "name": "Deep",
+    "author": "XYZ",
+    "pages": 775
+  }
+}
+```
+
+## ObjectId Structure
+
+A MongoDB `_id` field of type ObjectId consists of 12 bytes:
+
+1. **4 bytes**: Timestamp (creation date/time)
+2. **3 bytes**: Machine identifier
+3. **2 bytes**: Process ID
+4. **3 bytes**: Counter
+
+Every ObjectId is globally unique.
+
+## CRUD Operations
+
+### Create
+
+```js
+// Single document
+db.collection.insertOne({ name: "Alice", age: 30 });
+
+// Multiple documents
+db.collection.insertMany([
+  { name: "Bob", age: 25 },
+  { name: "Carol", age: 28 }
+]);
+```
+
+### Read
+
+```js
+// Find all documents
+db.employee.find();
+
+// Pretty-print results
+db.employee.find().pretty();
+
+// Iterate with a cursor
+var cur = db.employee.find().pretty();
+while (cur.hasNext()) {
+  print(tojson(cur.next()));
 }
 
-cur.forEach(printJson)
-var arry1=cur.toArray()
-var rec=arry1[0];
-cur.count()
-db.employee.find.count()
-db.students.find().count()
-.size(n)
-.skip(n)
-//db.tablename.find() for searching full collection
-//use dbname() for using the database
-.sort({filedname:1/-1,fieldname2:1,-1})
-db.students.find().skip(2)
-db.students.find().limit(4)
-db.students.find().count()
-7
-db.students.find().size(4)
-db.students.find()
-use config
-To insert a single document, use the insertOne() method.
-To insert multiple documents at once, use the insertMany() method.
-//bulk insertiin -> bulk.insert
+// ForEach shorthand
+cur.forEach(printjson);
 
-//bulk insertion
-var bulk=db.employee.initialize unorderedBulkOp()
-bulk.insert({empid:101,ename:'gst'.. . . . .})
-you have to write bulk as many as you want to insert records
-bulk.execute()
+// Convert to array
+var array1 = cur.toArray();
+var firstRecord = array1[0];
 
-//FIND AND MODIFY
+// Count
+db.employee.find().count();
+```
 
-db.employee.findAndModify(
-   { query:{empid:123}
-   },
-   {
-    update:{$set:{city:"chandigarh",mobile:6283142732}}
-   }
+### Update
 
-)
+```js
+db.employee.findAndModify({
+  query: { empid: 123 },
+  update: { $set: { city: "Chandigarh", mobile: "6283142732" } }
+});
+```
 
+### Delete
 
-//COPY
-db.employee.copyTo("collection name") //copy to the given collection
+```js
+// Single delete
+db.employee.deleteOne({ empid: 123 });
 
-//distinct
-for finding unique value
-db.employee.distinct("city) [city1,city2,city3]
+// Multiple deletes
+db.employee.deleteMany({ city: "Chandigarh" });
+```
 
-index creation
-db.employee.createIndex({employeename:1/-1,city:1/-1})
-we can create multiple index for multiply fileds in a time
-db.employee.getIndexes() - will give the fields on which ,indexes created
-delete index-> db.epmoyee.dropindex('indexname/feildname')
+## Query Modifiers
 
-/AGGREGATE pipelines
-1st output can be used in 2nd state and 2nd output is used in further state...
+```js
+// Sort: 1 = ascending, -1 = descending
+db.students.find().sort({ name: 1, age: -1 });
 
-example
-//posts  post having more likes two stages
-db.posts.aggregrate([{
-    $match:{likes:{$gt:1}
-    },
-    {
-        $group:{_id:"$category",totalLikes:{$sum: "$likes"}
-    }
-}
-}])
-category-> filed
+// Skip and limit
+db.students.find().skip(2).limit(4);
 
-for storing the data in collection: of above aggregation
-db.posts.aggregrate([{
-    $match:{likes:{$gt:1}
-    },
-    {
-        $group:{_id:"$category",totalLikes:{$sum: "$likes"}
-    }
-},
-{
-    $out:"gikescount
-}
-}])
+// Count
+db.students.find().count();
 
+// Size (alias for limit in some drivers)
+db.students.find().size(4);
+```
 
-//limit COMMAND for aggregation
-//db.movies.aggregate
-db.movies.aggregate([{$limit: n}]) n-> no. of records
+## Indexing
 
+```js
+// Create index
+db.employee.createIndex({ employeename: 1, city: -1 });
 
-//PROJECTION $project
-db.restaurent.aggregrate({$project:{
-$sort:{"name":1} }
-{"name":1,
-"address":1,
-"cursine":1}},{
-    limit:5
-})
+// List indexes
+db.employee.getIndexes();
+
+// Drop index
+db.employee.dropIndex('employeename_1_city_-1');
+```
+
+## Aggregation Pipelines
+
+Aggregation stages process data sequentially:
+
+```js
+// Example: total likes by category for posts with >1 like
+db.posts.aggregate([
+  { $match: { likes: { $gt: 1 } } },
+  { $group: { _id: "$category", totalLikes: { $sum: "$likes" } } }
+]);
+
+// Output to collection
+db.posts.aggregate([
+  { $match: { likes: { $gt: 1 } } },
+  { $group: { _id: "$category", totalLikes: { $sum: "$likes" } } },
+  { $out: "likesCount" }
+]);
+
+// Limit result count
+db.movies.aggregate([{ $limit: 5 }]);
+
+// Projection and sort example
+db.restaurant.aggregate([
+  { $project: { name: 1, address: 1, cuisine: 1 } },
+  { $sort: { name: 1 } },
+  { $limit: 5 }
+]);
+```
+
+## Useful Commands
+
+```js
+// Copy collection
+db.employee.copyTo("backupCollection");
+
+// Distinct values in a field
+db.employee.distinct("city");
+
+// Bulk operations
+var bulk = db.employee.initializeUnorderedBulkOp();
+bulk.insert({ empid: 101, ename: 'GST' });
+// ... add more bulk.insert() calls ...
+bulk.execute();
+```
+
+---
+
+*End of README.md*
